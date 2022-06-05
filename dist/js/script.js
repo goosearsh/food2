@@ -131,13 +131,11 @@ window.addEventListener('DOMContentLoaded', () => {
 
 	//Карточки
 
-
 	class MenuCard {
-		constructor(src, alt, subtitle, descr, price, parent, ...classes) {
+		constructor(src, alt, title, descr, price, parent, ...classes) {
 			this.src = src;
 			this.alt = alt;
-			this.subtitle = subtitle;
-			this.descr = descr;
+			this.title = title;
 			this.descr = descr;
 			this.price = price;
 			this.parent = document.querySelector('.menu__field .container');
@@ -145,16 +143,15 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 		render() {
 			const element = document.createElement('div');
-			if (this.classes.length === 0) {
-				this.element = 'menu__item';
-				element.classList.add(this.element);
+			if (element.classList.length == 0) {
+				element.classList.add('menu__item');
 			}
 			else {
-				this.classes.forEach(className => element.classList.add(className));
+				this.classes.forEach(item => element.classList.add(item));
 			}
 			element.innerHTML = `
 			<img src=${this.src} alt=${this.alt}>
-			<h3 class="menu__item-subtitle">${this.subtitle}</h3>
+			<h3 class="menu__item-subtitle">${this.title}</h3>
 			<div class="menu__item-descr">${this.descr}</div>
 			<div class="menu__item-divider"></div>
 			<div class="menu__item-price">
@@ -166,53 +163,55 @@ window.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
-	const getResources = async (url) => {
+	const getData = async (url) => {
 		const res = await fetch(url);
 		if (!res.ok) {
-			throw new Error(`error`);
+			throw new Error('error');
 		}
 		return await res.json();
 	}
 
-
-	// getResources('http://localhost:3000/menu')
-	// 	.then((data) => {
-	// 		data.forEach(({ img, altimg, title, descr, price }) => {
-	// 			new MenuCard(img, altimg, title, descr, price).render();
-	// 		})
-	// 	});
-
-
-	axios.get('http://localhost:3000/menu')
-		.then(data =>
-			data.data.forEach(({ img, altimg, title, descr, price }) => {
+	getData('http://localhost:3000/menu')
+		.then((obj) => {
+			obj.forEach(({ img, altimg, title, descr, price }) => {
 				new MenuCard(img, altimg, title, descr, price).render();
-			}));
+			});
+		});
 
-	//Форма
 
-	const forms = document.querySelectorAll('form');
-	forms.forEach(item => {
-		sendForm(item);
-	});
+	// new MenuCard(
+	// 	"img/tabs/vegy.jpg",
+	// 	"vegy",
+	// 	"Меню 'Фитнес'",
+	// 	"Меню 'Фитнес' - это новый подход к приготовлению блюд: больше свежих овощей и фруктов. Продукт активных и здоровых людей. Это абсолютно новый продукт с оптимальной ценой и высоким качеством!",
+	// 	9
+	// ).render();
+
 	const postData = async (url, data) => {
 		const res = await fetch(url, {
-			method: 'POST',
+			method: "POST",
 			headers: {
-				'Content-type': 'application/json'
+				'Content-type': 'application/form-data',
 			},
 			body: data,
-		})
+		});
 		return await res.json();
 	}
+
+
+	const forms = document.querySelectorAll('form');
+	forms.forEach(form => sendForm(form))
 
 
 	function sendForm(form) {
 		form.addEventListener('submit', (e) => {
 			e.preventDefault();
 			const formData = new FormData(form);
-			const json = JSON.stringify(Object.fromEntries(formData.entries()));
-			postData('http://localhost:3000/requests', json)
+			const obj = {};
+			formData.forEach((item, i) => {
+				obj[i] = item;
+			})
+			postData('http://localhost:3000/requests', obj)
 				.then((data) => {
 					console.log(data);
 				})
@@ -221,135 +220,63 @@ window.addEventListener('DOMContentLoaded', () => {
 				})
 				.finally(() => {
 					form.reset();
-				})
-		})
+				});
+
+		});
+	}
+
+	//Slider
+
+	const slides = document.querySelectorAll('.offer__slide'),
+		prev = document.querySelector('.offer__slider-prev'),
+		next = document.querySelector('.offer__slider-next'),
+		total = document.querySelector('#total'),
+		current = document.querySelector('#current');
+	let slideIndex = 1;
+
+	showSlides(slideIndex);
+
+	if (slides.length < 10) {
+		total.textContent = `0${slides.length}`;
+	}
+	else {
+		total.textContent = slides.length;
+	}
+
+	function showSlides(n) {
+		if (n > slides.length) {
+			slideIndex = 1;
+		}
+
+		if (n < 1) {
+			slideIndex = slides.length;
+		}
+
+		slides.forEach(item => item.style.display = 'none');
+
+		slides[slideIndex - 1].style.display = 'block';
+
+		if (slides.length < 10) {
+			current.textContent = `0${slideIndex}`;
+		}
+		else {
+			current.textContent = slideIndex;
+		}
 	}
 
 
-	//Слайдер
-
-	// const slider = document.querySelector('.offer__slider'),
-	// 	sliderWrapper = slider.querySelector('.offer__slider-wrapper'),
-	// 	currentSlide = slider.querySelector('#current'),
-	// 	sliderCounter = slider.querySelector('.offer__slider-counter');
+	function plusSlides(n) {
+		showSlides(slideIndex += n);
+	}
 
 
-	// sliderCounter.addEventListener('click', (e) => {
-	// 	let counter = +currentSlide.innerHTML;
-	// 	if (e.target.classList.contains('offer__slider-next')) {
-	// 		counter++;
-	// 		currentSlide.innerHTML = `0${counter}`;
-	// 		if (counter == 1) {
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 				<div class="offer__slide">
-	// 							<img src="img/slider/pepper.jpg" alt="pepper">
-	// 						</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		else if (counter == 2) {
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 			<div class="offer__slide">
-	// 			<img src="img/slider/food-12.jpg" alt="food">
-	// 		</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		else if (counter == 3) {
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 			<div class="offer__slide">
-	// 				<img src="img/slider/olive-oil.jpg" alt="oil">
-	// 			</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		else if (counter == 4) {
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 			<div class="offer__slide">
-	// 							<img src="img/slider/paprika.jpg" alt="paprika">
-	// 						</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		else if (counter > 4) {
-	// 			counter = 1;
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 				<div class="offer__slide">
-	// 							<img src="img/slider/pepper.jpg" alt="pepper">
-	// 						</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		currentSlide.innerHTML = `0${counter}`;
-	// 	}
-	// 	if (e.target.classList.contains('offer__slider-prev')) {
-	// 		let counter = +currentSlide.innerHTML;
-	// 		counter--;
-	// 		if (counter == 1) {
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 				<div class="offer__slide">
-	// 							<img src="img/slider/pepper.jpg" alt="pepper">
-	// 						</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		else if (counter == 2) {
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 			<div class="offer__slide">
-	// 			<img src="img/slider/food-12.jpg" alt="food">
-	// 		</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		else if (counter == 3) {
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 			<div class="offer__slide">
-	// 				<img src="img/slider/olive-oil.jpg" alt="oil">
-	// 			</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		else if (counter == 4) {
-	// 			slider.innerHTML === '';
-	// 			sliderWrapper.innerHTML = `
-	// 			<div class="offer__slide">
-	// 							<img src="img/slider/paprika.jpg" alt="paprika">
-	// 						</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		else if (counter < 1) {
-	// 			slider.innerHTML === '';
-	// 			counter = 4;
-	// 			sliderWrapper.innerHTML = `
-	// 			<div class="offer__slide">
-	// 							<img src="img/slider/paprika.jpg" alt="paprika">
-	// 						</div>
-	// 				`;
-	// 			console.log(counter);
-	// 		}
-	// 		currentSlide.innerHTML = `0${counter}`;
-	// 	}
-	// });
+	prev.addEventListener('click', () => {
+		plusSlides(-1);
+	});
 
-
-	
-
-
-
-
-
-
-
-
+	next.addEventListener('click', () => {
+		plusSlides(1);
+	});
 
 
 
